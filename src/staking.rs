@@ -29,22 +29,15 @@ impl<T: StakingConfig> StakingPallet<T> {
 
     // Stake tokens (move from free to staked)
     pub fn stake(&mut self, who: T::AccountId, amount: T::Balance) -> Result<(), &'static str> {
-        let free_balance = self
-            .free_balances
-            .get(&who)
-            .copied()
-            .unwrap_or(T::Balance::zero());
+        let free_balance = self.get_free_balance(who.clone());
         if free_balance < amount {
             return Err("Insufficient balance");
         }
 
         self.free_balances
             .insert(who.clone(), free_balance.checked_sub(&amount).unwrap());
-        let staked_balance = self
-            .staked_balances
-            .get(&who)
-            .copied()
-            .unwrap_or(T::Balance::zero());
+
+        let staked_balance = self.get_staked_balance(who.clone());
         self.staked_balances
             .insert(who, staked_balance.checked_add(&amount).unwrap());
 
@@ -53,22 +46,15 @@ impl<T: StakingConfig> StakingPallet<T> {
 
     // Unstake tokens (move from staked to free)
     pub fn unstake(&mut self, who: T::AccountId, amount: T::Balance) -> Result<(), &'static str> {
-        let staked_balance = self
-            .staked_balances
-            .get(&who)
-            .copied()
-            .unwrap_or(T::Balance::zero());
+        let staked_balance = self.get_staked_balance(who.clone());
         if staked_balance < amount {
             return Err("Insufficient staked balance");
         }
 
         self.staked_balances
             .insert(who.clone(), staked_balance.checked_sub(&amount).unwrap());
-        let free_balance = self
-            .free_balances
-            .get(&who)
-            .copied()
-            .unwrap_or(T::Balance::zero());
+
+        let free_balance = self.get_free_balance(who.clone());
         self.free_balances
             .insert(who, free_balance.checked_add(&amount).unwrap());
 
